@@ -33,6 +33,17 @@ const colorThemes: Record<
 /**
  * Galaxy Parameters
  */
+type GalaxyMode =
+  | "spiral"
+  | "elliptical"
+  | "cluster"
+  | "explosion"
+  | "tornado"
+  | "swirl"
+  | "helix"
+  | "blackHole"
+  | "galaxyMerge";
+
 const parameters = {
   mode: "spiral" as GalaxyMode,
   count: 10000,
@@ -46,14 +57,6 @@ const parameters = {
   outsideColor: colorThemes["Vibrant Cosmic Glow"].outsideColor,
   autoRotate: true,
 };
-
-type GalaxyMode =
-  | "spiral"
-  | "elliptical"
-  | "cluster"
-  | "ring"
-  | "explosion"
-  | "tornado";
 
 let geometry: THREE.BufferGeometry | null = null;
 let material: THREE.PointsMaterial | null = null;
@@ -111,11 +114,6 @@ const generateGalaxy = () => {
         y = (Math.random() - 0.5) * parameters.radius * 2;
         z = (Math.random() - 0.5) * parameters.radius * 2;
         break;
-      case "ring":
-        x = Math.cos(branchAngle) * radius + randomX * 0.2;
-        y = randomY * 0.1;
-        z = Math.sin(branchAngle) * radius + randomZ * 0.2;
-        break;
       case "explosion":
         x = radius * randomX;
         y = radius * randomY;
@@ -126,6 +124,37 @@ const generateGalaxy = () => {
         x = Math.sin(branchAngle + spinAngle) * radius;
         y = height * (i / parameters.count) - parameters.radius;
         z = Math.cos(branchAngle + spinAngle) * radius;
+        break;
+      case "swirl":
+        const swirlFactor = Math.sin(i / 100) * 0.5;
+        x =
+          Math.cos(branchAngle + spinAngle + swirlFactor) * radius +
+          randomX * 0.5;
+        y = Math.sin(swirlFactor * 5) * 2 + randomY * 0.5;
+        z =
+          Math.sin(branchAngle + spinAngle + swirlFactor) * radius +
+          randomZ * 0.5;
+        break;
+      case "helix":
+        const angle = i * 0.02;
+        const helixRadius = radius * 0.6;
+        x = Math.cos(angle + branchAngle) * helixRadius + randomX * 0.3;
+        y =
+          (i / parameters.count) * parameters.radius * 4 -
+          parameters.radius * 2;
+        z = Math.sin(angle + branchAngle) * helixRadius + randomZ * 0.3;
+        break;
+      case "blackHole":
+        const angleBlackHole = Math.random() * Math.PI * 2;
+        x = Math.cos(angleBlackHole) * radius;
+        y = Math.random() * 0.1;
+        z = Math.sin(angleBlackHole) * radius;
+        break;
+      case "galaxyMerge":
+        const mergeRadius = radius * 2;
+        x = (Math.random() - 0.5) * mergeRadius;
+        y = (Math.random() - 0.5) * mergeRadius;
+        z = (Math.random() - 0.5) * mergeRadius;
         break;
     }
 
@@ -169,9 +198,12 @@ gui
     "spiral",
     "elliptical",
     "cluster",
-    "ring",
     "explosion",
     "tornado",
+    "swirl",
+    "helix",
+    "blackHole",
+    "galaxyMerge",
   ])
   .onChange(generateGalaxy);
 
@@ -265,6 +297,7 @@ scene.add(camera);
  */
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
+controls.autoRotate = parameters.autoRotate;
 
 /**
  * Renderer
@@ -276,12 +309,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 /**
  * Animation Loop
  */
-const clock = new THREE.Clock();
 const tick = () => {
-  const elapsedTime = clock.getElapsedTime();
-  if (points && parameters.autoRotate) {
-    points.rotation.y = elapsedTime * 0.1;
-  }
+  controls.autoRotate = parameters.autoRotate;
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
